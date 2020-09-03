@@ -157,6 +157,36 @@ def blur_img(event):
     #Update the display
     update_window(imgtk, tex)
 
+'''might get changed'''
+def nearest_neighbor(event):
+    global count
+    global current_disp
+    image = opencv_img(count)
+    image = cv2.resize(image, (int(image.shape[1]*0.5), int(image.shape[0]*0.5)), interpolation=cv2.INTER_NEAREST)
+    imgtk = convert_img(image)
+    tex = extract_meta()
+    #Update the display
+    update_window(imgtk, tex)
+
+def bicubic(event):
+    global count
+    global current_disp
+    image = opencv_img(count)
+    image = cv2.resize(image, (int(image.shape[1]*0.5), int(image.shape[0]*0.5)), interpolation=cv2.INTER_CUBIC)
+    imgtk = convert_img(image)
+    tex = extract_meta()
+    #Update the display
+    update_window(imgtk, tex)
+
+def bilinear(event):
+    global count
+    global current_disp
+    image = opencv_img(count)
+    image = cv2.resize(image, (int(image.shape[1]*0.5), int(image.shape[0]*0.5)), interpolation=cv2.INTER_LINEAR)
+    imgtk = convert_img(image)
+    tex = extract_meta()
+    #Update the display
+    update_window(imgtk, tex)
 
 # Apply an affine transformation
 def affine_trans(event):
@@ -290,6 +320,33 @@ def main():
     )
     btn_save.grid(row = 1, column = 0)
     btn_save.bind('<ButtonRelease-1>', write_img)
+
+    # Button for Nearest neighbor
+    btn_nearest = Button(
+        master = frame,
+        text = "Nearest Neighbor",
+        underline = 0
+    )
+    btn_nearest.grid(row = 1, column = 1)
+    btn_nearest.bind('<ButtonRelease-1>', nearest_neighbor)
+
+    # Button for Bicubic
+    btn_bicubic = Button(
+        master = frame,
+        text = "Bicubic",
+        underline = 2
+    )
+    btn_bicubic.grid(row = 1, column = 2)
+    btn_bicubic.bind('<ButtonRelease-1>', bicubic)
+
+    # Button for Bilinear
+    btn_bilinear = Button(
+        master = frame,
+        text = "Bilinear",
+        underline = 2
+    )
+    btn_bilinear.grid(row = 1, column = 3)
+    btn_bilinear.bind('<ButtonRelease-1>', bilinear)
 
     # Bind all the required keys to functions
     root.bind('<n>', next_img)
