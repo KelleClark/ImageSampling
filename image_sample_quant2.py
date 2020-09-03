@@ -161,6 +161,8 @@ def blur_img(event):
 # Apply an affine transformation
 def affine_trans(event):
     global count
+    global current_disp
+    
     src = cv2.cvtColor(opencv_img(count), cv2.COLOR_BGR2RGB)
 
     # Set triangle corners used for affine transformation to top left, top right, and bottom left corners of image
@@ -173,6 +175,9 @@ def affine_trans(event):
     warp_mat = cv2.getAffineTransform(srcTri, dstTri)
     dst = cv2.warpAffine(src, warp_mat,(src.shape[1],src.shape[0]))
 
+    # Update the image currently displayed
+    current_disp = dst
+    
     # Convert image to Tk format
     imgtk = convert_img(dst)
     tex = extract_meta()
@@ -202,7 +207,7 @@ def write_img(event):
        
     currpath = extract_meta()
     newname = currpath[1]+"new"+str(count) 
-    status = cv2.imwrite(currpath[0]+newname+".png", current_disp)
+    status = cv2.imwrite(currpath[0]+"/"+ newname+".png", current_disp)
     if status != False:
         print("A new image has been added at "+currpath[0]+newname)
         showinfo("Image saved at "+currpath[0]+newname)
