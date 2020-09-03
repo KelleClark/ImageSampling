@@ -72,24 +72,6 @@ def opencv_img(count):
     rows[count] = str(image.shape[0]) # add row count to list
     pixels[count] = str(image.shape[1] * image.shape[0]) # add pixel count to list
 
-    # Set scale multiplier to the lowest of the following values:
-    # 1
-    # window row count / image row count
-    # window column count / image column count
-    scale = min(1, min(get_args().rows / image.shape[0], get_args().cols / image.shape[1]))
-
-    # Set triangle corners used for affine transformation to top left, top right, and bottom left corners of image
-    srcTri = np.array([[0, 0], [image.shape[1] - 1, 0], [0, image.shape[0] - 1]]).astype(np.float32)
-
-    # Set location of top right and bottom left corners of resized image
-    dstTri = np.array( [[0, 0], [int(image.shape[1] * scale), 0], [0, int(image.shape[0] * scale)]] ).astype(np.float32)
-
-    # Perform affine transformation to resize image
-    warp_mat = cv2.getAffineTransform(srcTri, dstTri)
-    image = cv2.warpAffine(image, warp_mat, (image.shape[1], image.shape[0]))
-
-    # Trim black border from resized image
-    image = image[0:int(image.shape[0] * scale), 0:int(image.shape[1] * scale)]
     return(image)
 
 # Convert it to ImageTK
@@ -106,12 +88,6 @@ def load_img(count):
     current_disp = convert_img(opencv_img(count))
     return current_disp
 
-# Show metadata
-def meta(event):
-    global count
-    impath = images[count]
-    info = os.lstat(impath)
-    showinfo("Image Metadata", info)
 
 # Update the information about the newest photo and the image itself
 #   on the window
@@ -145,74 +121,57 @@ def prev_img(event):
     #Update the display
     update_window(imgtk, tex)
 
-# Blur the image using Gaussianblur
-def blur_img(event):
-    global count
-    global current_disp
-    
-    current_disp = cv2.GaussianBlur(opencv_img(count), (15, 15), cv2.BORDER_DEFAULT)
-    imgtk = convert_img(current_disp)
-    
-    tex = extract_meta()
-    #Update the display
-    update_window(imgtk, tex)
 
 '''might get changed'''
-def nearest_neighbor(event):
+
+def shrink_NN(event):
+    nearest_neighbor(0.5)
+
+def shrink_bicubic(event):
+    bicubic(0.5)
+
+def shrink_bilinear(event):
+    bilinear(0.5)
+
+def increase_NN(event):
+    nearest_neighbor(2)
+
+def increase_bicubic(event):
+    bicubic(2)
+
+def increase_bilinear(event):
+    bilinear(2)
+
+def nearest_neighbor(factor=0.5):
     global count
     global current_disp
     image = opencv_img(count)
-    image = cv2.resize(image, (int(image.shape[1]*0.5), int(image.shape[0]*0.5)), interpolation=cv2.INTER_NEAREST)
-    imgtk = convert_img(image)
+    current_disp = cv2.resize(image, (int(image.shape[1]*factor), int(image.shape[0]*factor)), interpolation=cv2.INTER_NEAREST)
+    imgtk = convert_img(current_disp)
     tex = extract_meta()
     #Update the display
     update_window(imgtk, tex)
 
-def bicubic(event):
+def bicubic(factor = 0.5):
     global count
     global current_disp
     image = opencv_img(count)
-    image = cv2.resize(image, (int(image.shape[1]*0.5), int(image.shape[0]*0.5)), interpolation=cv2.INTER_CUBIC)
-    imgtk = convert_img(image)
+    current_disp = cv2.resize(image, (int(image.shape[1]*factor), int(image.shape[0]*factor)), interpolation=cv2.INTER_CUBIC)
+    imgtk = convert_img(current_disp)
     tex = extract_meta()
     #Update the display
     update_window(imgtk, tex)
 
-def bilinear(event):
+def bilinear(factor=0.5):
     global count
     global current_disp
     image = opencv_img(count)
-    image = cv2.resize(image, (int(image.shape[1]*0.5), int(image.shape[0]*0.5)), interpolation=cv2.INTER_LINEAR)
-    imgtk = convert_img(image)
+    current_disp = cv2.resize(image, (int(image.shape[1]*factor), int(image.shape[0]*factor)), interpolation=cv2.INTER_LINEAR)
+    imgtk = convert_img(current_disp)
     tex = extract_meta()
     #Update the display
     update_window(imgtk, tex)
 
-# Apply an affine transformation
-def affine_trans(event):
-    global count
-    global current_disp
-    
-    src = cv2.cvtColor(opencv_img(count), cv2.COLOR_BGR2RGB)
-
-    # Set triangle corners used for affine transformation to top left, top right, and bottom left corners of image
-    srcTri = np.array( [[0, 0], [src.shape[1] - 1, 0], [0, src.shape[0] - 1]] ).astype(np.float32)
-
-    # Set new locations of top left, top right, and bottom left corners of resized image
-    dstTri = np.array( [[0, src.shape[1]*0.33], [src.shape[1]*0.85, src.shape[0]*0.25], [src.shape[1]*0.15, src.shape[0]*0.7]] ).astype(np.float32)
-
-    # Perform affine transformation
-    warp_mat = cv2.getAffineTransform(srcTri, dstTri)
-    dst = cv2.warpAffine(src, warp_mat,(src.shape[1],src.shape[0]))
-
-    # Update the image currently displayed
-    current_disp = dst
-    
-    # Convert image to Tk format
-    imgtk = convert_img(dst)
-    tex = extract_meta()
-    #Update the display
-    update_window(imgtk, tex)
 
 #Exit the program
 def quit_img(event):
@@ -234,9 +193,8 @@ def extract_meta():
 def write_img(event):
     global count
     global current_disp
-       
     currpath = extract_meta()
-    newname = currpath[1]+"new"+str(count) 
+    newname = currpath[1]+"new"+str(count)
     status = cv2.imwrite(currpath[0]+"/"+ newname+".png", current_disp)
     if status != False:
         print("A new image has been added at "+currpath[0]+newname)
@@ -244,8 +202,8 @@ def write_img(event):
         load_path(args.path)
     else:
        print("The image was not saved")
-       showinfo("The image was not saved") 
-    
+       showinfo("The image was not saved")
+
 
 def main():
 
@@ -259,7 +217,7 @@ def main():
     load_path(args.path)
     imgtk = load_img(count)
     tex = extract_meta()
-    
+
     # keep track of the image currently in window
     global current_disp
     current_disp = imgtk
@@ -285,23 +243,15 @@ def main():
     btn_previous.grid(row = 0, column = 0)
     btn_previous.bind('<ButtonRelease-1>', prev_img)
 
-    # Button to blur image
-    btn_blur = Button(
+    # Button for Save image
+    btn_save = Button(
         master = frame,
-        text = "Blur",
+        text = "Save",
         underline = 0
     )
-    btn_blur.grid(row = 0, column = 1)
-    btn_blur.bind('<ButtonRelease-1>', blur_img)
+    btn_save.grid(row = 0, column = 1)
+    btn_save.bind('<ButtonRelease-1>', write_img)
 
-    # Button to perform an affine transformation and color conversion
-    btn_affine = Button(
-        master = frame,
-        text = "AffineT",
-        underline = 0
-    )
-    btn_affine.grid(row = 0, column = 2)
-    btn_affine.bind('<ButtonRelease-1>', affine_trans)
 
     # Button for next image
     btn_next = Button(
@@ -309,51 +259,67 @@ def main():
         text = "Next",
         underline = 0
     )
-    btn_next.grid(row = 0, column = 3)
+    btn_next.grid(row = 0, column = 2)
     btn_next.bind('<ButtonRelease-1>', next_img)
-    
-    # Button for Save image
-    btn_save = Button(
-        master = frame,
-        text = "Save",
-        underline = 0
-    )
-    btn_save.grid(row = 1, column = 0)
-    btn_save.bind('<ButtonRelease-1>', write_img)
 
     # Button for Nearest neighbor
     btn_nearest = Button(
         master = frame,
-        text = "Nearest Neighbor",
+        text = "Nearest Neighbor, shrink",
         underline = 0
     )
-    btn_nearest.grid(row = 1, column = 1)
-    btn_nearest.bind('<ButtonRelease-1>', nearest_neighbor)
+    btn_nearest.grid(row = 1, column = 0)
+    btn_nearest.bind('<ButtonRelease-1>', shrink_NN)
 
     # Button for Bicubic
     btn_bicubic = Button(
         master = frame,
-        text = "Bicubic",
+        text = "Bicubic, shrink",
         underline = 2
     )
-    btn_bicubic.grid(row = 1, column = 2)
-    btn_bicubic.bind('<ButtonRelease-1>', bicubic)
+    btn_bicubic.grid(row = 1, column = 1)
+    btn_bicubic.bind('<ButtonRelease-1>', shrink_bicubic)
 
     # Button for Bilinear
     btn_bilinear = Button(
         master = frame,
-        text = "Bilinear",
+        text = "Bilinear, shrink",
         underline = 2
     )
-    btn_bilinear.grid(row = 1, column = 3)
-    btn_bilinear.bind('<ButtonRelease-1>', bilinear)
+    btn_bilinear.grid(row = 1, column = 2)
+    btn_bilinear.bind('<ButtonRelease-1>', shrink_bilinear)
+
+      # Button for Nearest neighbor increase
+    btn_nearest = Button(
+        master = frame,
+        text = "Nearest Neighbor, increase",
+        underline = 0
+    )
+    btn_nearest.grid(row = 2, column = 0)
+    btn_nearest.bind('<ButtonRelease-1>', increase_NN)
+
+    # Button for Bicubic increase
+    btn_bicubic = Button(
+        master = frame,
+        text = "Bicubic, increase",
+        underline = 2
+    )
+    btn_bicubic.grid(row = 2, column = 1)
+    btn_bicubic.bind('<ButtonRelease-1>', increase_bicubic)
+
+    # Button for Bilinear increase
+    btn_bilinear = Button(
+        master = frame,
+        text = "Bilinear, increase",
+        underline = 2
+    )
+    btn_bilinear.grid(row = 2, column = 2)
+    btn_bilinear.bind('<ButtonRelease-1>', increase_bilinear)
 
     # Bind all the required keys to functions
     root.bind('<n>', next_img)
     root.bind("<p>", prev_img)
     root.bind("<q>", quit_img)
-    root.bind("<b>", blur_img)
-    root.bind("<a>", affine_trans)
 
     root.mainloop() # Start the GUI
 
