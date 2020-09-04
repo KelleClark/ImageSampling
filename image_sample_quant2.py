@@ -200,12 +200,46 @@ def enlarge_linear(event):
         for i in range(1, enlarged_img.shape[0] - 2, 2):
             enlarged_img[i, j] = (1/2)*enlarged_img[i-1, j] + (1/2)*enlarged_img[i+1, j]
         enlarged_img[enlarged_img.shape[0] - 1, j] = enlarged_img[enlarged_img.shape[0] - 2, j]
+        
+    # For each new pixel in the "center" of a square created by four projected pixels from the original
+    # image, we use linear interpolation with the average of the upper right (original pixel) and lower
+    # left of the original pixel.
+    for i in range(1, enlarged_img.shape[0]-1, 2):
+        for j in range(1, enlarged_img.shape[1]-1, 2):
+            enlarged_img[i,j+1] = (1/2)*enlarged_img[i+1,j-1] + (1/2)*enlarged_img[i+1, j+1]
 
     enlarged_img = enlarged_img[0:int(enlarged_img.shape[0]*2), 0:int(enlarged_img.shape[1]*2)]
+    current_disp = enlarged_img
     imgtk = convert_img(enlarged_img)
     tex = extract_meta()
     update_window(imgtk, tex)
 
+# Shrink image by factor of 2 (or nearly 2 if odd dimension) using linear interpolation
+def shrink_linear(event):
+    global current_disp
+    image = opencv_img(count)
+
+    # print("The shape of the image is " + current_disp.shape[0] + " by " + current_disp.shape[1])
+    print("The shape of the image is " + str(image.shape[0]) + " by " + str(image.shape[1]))
+
+    # We make a new matrix (multi-dim array) of all zeros twice the width and height that holds RGB
+    # enlarged_img = np.zeros((2 * current_disp.shape[0], 2 * current_disp.shape[1], 3), dtype=np.uint8)
+    shruken_img = np.zeros((image.shape[0]//2, image.shape[1]//2, 3), dtype=np.uint8)
+
+    # The new image will have only a new pixel in the center of each rectangle of old pixel positions
+    # were two adjacent rows and two adjacent columns create a square.  Taking these squares to be 
+    # non-overlapping approximates the half size for the original image.
+    # Value of RGB function at the new point is created by using linear interpolation between
+    # bottom left and top right oringal pixel values of the square.
+    for i in range(image.shape[0]-1,2):
+        for j in range(image.shape[1]- 1,2):
+            shruken_img[i, j] = (1 / 2) * image[i+1, j] + (1 / 2) * image[i, j + 1]
+
+    shrunken_img = shrunken_img[0:int(shrunken_img.shape[0]*2), 0:int(shrukne_img.shape[1]*2)]
+    current_disp = shruken_img
+    imgtk = convert_img(shruken_img)
+    tex = extract_meta()
+    update_window(imgtk, tex)
 
 #Exit the program
 def quit_img(event):
