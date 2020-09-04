@@ -224,20 +224,22 @@ def shrink_linear(event):
 
     # We make a new matrix (multi-dim array) of all zeros twice the width and height that holds RGB
     # enlarged_img = np.zeros((2 * current_disp.shape[0], 2 * current_disp.shape[1], 3), dtype=np.uint8)
-    shruken_img = np.zeros((image.shape[0]//2, image.shape[1]//2, 3), dtype=np.uint8)
+    shrunken_img = np.ones((image.shape[0]//2, image.shape[1]//2, 3), dtype=np.uint8)
 
     # The new image will have only a new pixel in the center of each rectangle of old pixel positions
     # were two adjacent rows and two adjacent columns create a square.  Taking these squares to be 
     # non-overlapping approximates the half size for the original image.
     # Value of RGB function at the new point is created by using linear interpolation between
     # bottom left and top right oringal pixel values of the square.
-    for i in range(image.shape[0]-1,2):
-        for j in range(image.shape[1]- 1,2):
-            shruken_img[i, j] = (1 / 2) * image[i+1, j] + (1 / 2) * image[i, j + 1]
 
-    shrunken_img = shrunken_img[0:int(shrunken_img.shape[0]*2), 0:int(shrukne_img.shape[1]*2)]
-    current_disp = shruken_img
-    imgtk = convert_img(shruken_img)
+            
+    for i in range(1,shrunken_img.shape[0]):
+        for j in range(shrunken_img.shape[1]-1):
+            shrunken_img[i, j] = (1/2)*image[2*i,2*j]+(1/2)*image[2*i-1,2*j]
+
+    shrunken_img = shrunken_img[0:int(shrunken_img.shape[0]*2), 0:int(shrunken_img.shape[1]*2)]
+    current_disp = shrunken_img
+    imgtk = convert_img(shrunken_img)
     tex = extract_meta()
     update_window(imgtk, tex)
 
@@ -331,65 +333,74 @@ def main():
     btn_next.bind('<ButtonRelease-1>', next_img)
 
     # Button for Nearest neighbor
-    btn_nearest = Button(
+    btn_nearest_sh = Button(
         master = frame,
         text = "Nearest Neighbor, shrink",
         underline = 0
     )
-    btn_nearest.grid(row = 1, column = 0)
-    btn_nearest.bind('<ButtonRelease-1>', shrink_NN)
+    btn_nearest_sh.grid(row = 1, column = 0)
+    btn_nearest_sh.bind('<ButtonRelease-1>', shrink_NN)
 
     # Button for Bicubic
-    btn_bicubic = Button(
+    btn_bicubic_sh = Button(
         master = frame,
         text = "Bicubic, shrink",
         underline = 2
     )
-    btn_bicubic.grid(row = 1, column = 1)
-    btn_bicubic.bind('<ButtonRelease-1>', shrink_bicubic)
+    btn_bicubic_sh.grid(row = 1, column = 1)
+    btn_bicubic_sh.bind('<ButtonRelease-1>', shrink_bicubic)
 
     # Button for Bilinear
-    btn_bilinear = Button(
+    btn_bilinear_sh = Button(
         master = frame,
         text = "Bilinear, shrink",
         underline = 2
     )
-    btn_bilinear.grid(row = 1, column = 2)
-    btn_bilinear.bind('<ButtonRelease-1>', shrink_bilinear)
+    btn_bilinear_sh.grid(row = 1, column = 2)
+    btn_bilinear_sh.bind('<ButtonRelease-1>', shrink_bilinear)
+    
+    # Button for Linear
+    btn_linear_sh = Button(
+        master = frame,
+        text = "Linear, shrink",
+        underline = 2
+    )
+    btn_linear_sh.grid(row = 1, column = 3)
+    btn_linear_sh.bind('<ButtonRelease-1>', shrink_linear)
 
-      # Button for Nearest neighbor increase
-    btn_nearest = Button(
+    # Button for Nearest neighbor increase
+    btn_nearest_in = Button(
         master = frame,
         text = "Nearest Neighbor, increase",
         underline = 1
     )
-    btn_nearest.grid(row = 2, column = 0)
-    btn_nearest.bind('<ButtonRelease-1>', increase_NN)
+    btn_nearest_in.grid(row = 2, column = 0)
+    btn_nearest_in.bind('<ButtonRelease-1>', increase_NN)
 
     # Button for Bicubic increase
-    btn_bicubic = Button(
+    btn_bicubic_in = Button(
         master = frame,
         text = "Bicubic, increase",
         underline = 2
     )
-    btn_bicubic.grid(row = 2, column = 1)
-    btn_bicubic.bind('<ButtonRelease-1>', increase_bicubic)
+    btn_bicubic_in.grid(row = 2, column = 1)
+    btn_bicubic_in.bind('<ButtonRelease-1>', increase_bicubic)
 
     # Button for Bilinear increase
-    btn_bilinear = Button(
+    btn_bilinear_in = Button(
         master = frame,
         text = "Bilinear, increase",
         underline = 2
     )
-    btn_bilinear.grid(row = 2, column = 2)
-    btn_bilinear.bind('<ButtonRelease-1>', increase_bilinear)
+    btn_bilinear_in.grid(row = 2, column = 2)
+    btn_bilinear_in.bind('<ButtonRelease-1>', increase_bilinear)
 
-    btn_linear = Button(
+    btn_linear_in = Button(
         master = frame,
         text = "Linear, increase",
     )
-    btn_linear.grid(row = 3, column = 0)
-    btn_linear.bind('<ButtonRelease-1>', enlarge_linear)
+    btn_linear_in.grid(row = 2, column = 3)
+    btn_linear_in.bind('<ButtonRelease-1>', enlarge_linear)
 
     # Bind all the required keys to functions
     root.bind('<n>', next_img)
