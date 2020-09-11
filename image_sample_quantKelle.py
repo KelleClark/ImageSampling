@@ -329,6 +329,19 @@ def change_intensity(event):
     print("the max changed_blue is " + str(max_changed_blue)+" and the min changed_blue is "+ str(min_changed_blue))
     
     changed_img = changed_img[0:int(changed_img.shape[0]), 0:int(changed_img.shape[1])]
+   
+    plt.xlim([0, 256])
+    for channel_id, c in zip(channel_ids, colors):
+        histogram, bin_edges = np.histogram(
+            changed_img[:, :, channel_id], bins=256, range=(0, 256)
+        )
+        plt.plot(bin_edges[0:-1], histogram, color=c)
+
+    plt.xlabel("Color value")
+    plt.ylabel("Pixels")
+
+    plt.show()
+    
     current_disp = changed_img
     imgtk = convert_img(changed_img)
     tex = extract_meta()
