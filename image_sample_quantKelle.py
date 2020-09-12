@@ -250,13 +250,14 @@ def shrink_linear(event):
 # Change the intensity k
 def change_intensity(event):
     global current_disp
+    global intensity
     img = opencv_img(count)
-    k = 7
+    k = 6
     target_level = 2**k
     target_compr_factor = 256/target_level
     
     # a new matrix (multi-dim array) of all ones with the same width and height that holds RGB to be normalized
-    normalized_img = np.ones((img.shape[0], img.shape[1], 3), dtype=np.uint8)
+    normalized_img = np.ones((img.shape[0], img.shape[1], 3))
     
     # a new matrix (multi-dim array) of all ones with the same width and height that holds RGB for intensity change
     changed_img = np.ones((img.shape[0], img.shape[1], 3), dtype=np.uint8)
@@ -311,12 +312,14 @@ def change_intensity(event):
     print("the normalized_max green is " + str(max_normalized_green)+" and the normalized_min green is "+ str(min_normalized_green))
     print("the normalized_mmx blue is " + str(max_normalized_blue)+" and the normalized_min blue is "+ str(min_normalized_blue))
     
-    
+    # the normalized image is creating values between 0 and 1, transform to [0, 2^k -1] and taking the floor creates
+    # classes of pixels that will are now represented as a single transformed pixel value (equivalence classes) using floor
+    # the final transformation takes these values to the new pixel in the rangeg of [0, 255] before rendering the changed_img.
     for i in range(0, img.shape[0]):
         for j in range(0, img.shape[1]):
-            changed_img[i, j,0] =  np.uint8(math.floor(np.double(normalized_img[i,j,0]*target_level)))
-            changed_img[i, j,1] =  np.uint8(math.floor(np.double(normalized_img[i,j,1]*target_level)))
-            changed_img[i, j,2] =  np.uint8(math.floor(np.double(normalized_img[i,j,2]*target_level)))   
+            changed_img[i, j,0] =  np.uint8(min(255, ((math.floor(np.double(normalized_img[i,j,0]*target_level))/target_level))*255))
+            changed_img[i, j,1] =  np.uint8(min(255, ((math.floor(np.double(normalized_img[i,j,1]*target_level))/target_level))*255))
+            changed_img[i, j,2] =  np.uint8(min(255, ((math.floor(np.double(normalized_img[i,j,2]*target_level))/target_level))*255))
     
     max_changed_red = np.amax(changed_img[:,:,0])
     max_changed_green = np.amax(changed_img[:,:,1])
@@ -513,6 +516,25 @@ def main():
     )
     btn_intensity.grid(row = 2, column = 4)
     btn_intensity.bind('<ButtonRelease-1>', change_intensity)
+
+    Options = ["2", "4", "6"]
+    intensity = StringVar(root)
+    intensity.set(Options[0]) # default value
+
+    menu_intensity = OptionMenu(
+        root,
+        intensity, 
+        *Options
+    )
+    menu_intensity.pack()
+
+    button_int = Button(
+        master = frame,
+        text="change intenstiy to k", 
+        command=intensity
+    )
+    button_int.grid(row = 2, column = 5)
+    button_int.bind('<ButtonRelease-1>',change_intensity)
 
     # Bind all the required keys to functions
     root.bind('<n>', next_img)
