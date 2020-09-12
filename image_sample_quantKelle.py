@@ -89,6 +89,7 @@ def convert_img(image):
 
 # Wrapper to load the image for display
 def load_img(count):
+    global current_disp
     current_disp = convert_img(opencv_img(count))
     return current_disp
 
@@ -177,6 +178,7 @@ def bilinear(factor=0.5):
 
 # Enlarge image by factor of 2 using linear interpolation
 def enlarge_linear(event):
+    global count
     global current_disp
     image = opencv_img(count)
 
@@ -214,12 +216,13 @@ def enlarge_linear(event):
 
     enlarged_img = enlarged_img[0:int(enlarged_img.shape[0]*2), 0:int(enlarged_img.shape[1]*2)]
     current_disp = enlarged_img
-    imgtk = convert_img(enlarged_img)
+    imgtk = convert_img(current_disp)
     tex = extract_meta()
     update_window(imgtk, tex)
 
 # Shrink image by factor of 2 (or nearly 2 if odd dimension) using linear interpolation
 def shrink_linear(event):
+    global count
     global current_disp
     image = opencv_img(count)
 
@@ -243,17 +246,23 @@ def shrink_linear(event):
 
     shrunken_img = shrunken_img[0:int(shrunken_img.shape[0]*2), 0:int(shrunken_img.shape[1]*2)]
     current_disp = shrunken_img
-    imgtk = convert_img(shrunken_img)
+    imgtk = convert_img(current_disp)
     tex = extract_meta()
     update_window(imgtk, tex)
 
+
+def updateIntensity(*args):
+    global intens
+    print("intensity at k = "+ intens.get())
+    
 # Change the intensity k
 def change_intensity(event):
+    global count
     global current_disp
-    global intensity
+    global intens
     img = opencv_img(count)
-    k = 6
-    target_level = 2**k
+    k = int(intens.get())
+    target_level = 2**int(intens.get())
     target_compr_factor = 256/target_level
     
     # a new matrix (multi-dim array) of all ones with the same width and height that holds RGB to be normalized
@@ -371,12 +380,22 @@ def extract_meta():
 def write_img(event):
     global count
     global current_disp
+    
+    # get name of current image and add 'new" and index to name
     currpath = extract_meta()
-    newname = currpath[1]+"new"+str(count)
-    status = cv2.imwrite(currpath[0]+"/"+ newname+".png", current_disp)
+    name = currpath[1]
+    print(name)
+    ind = name.rindex(".")
+    if ind != -1:
+        newname = name[0:ind]+"New"+str(count)+name[ind:]
+    else:
+        newname = name+"New"+str(count)+".png"
+    status = cv2.imwrite(currpath[0]+"/"+ newname, current_disp)
+    
+    # if able to write to file, display  message otherwise display error message 
     if status != False:
-        print("A new image has been added at "+currpath[0]+newname)
-        showinfo("Image saved at "+currpath[0]+newname)
+        print("A new image has been added at "+currpath[0]+"/"+newname)
+        showinfo("Image saved at "+currpath[0]+"/"+newname)
         load_path(args.path)
     else:
        print("The image was not saved")
@@ -398,6 +417,7 @@ def main():
 
     # keep track of the image currently in window
     global current_disp
+    global intens
     current_disp = imgtk
 
     # Put everything in the display window
@@ -517,29 +537,34 @@ def main():
     btn_intensity.grid(row = 2, column = 4)
     btn_intensity.bind('<ButtonRelease-1>', change_intensity)
 
-    Options = ["2", "4", "6"]
-    intensity = StringVar(root)
-    intensity.set(Options[0]) # default value
+    options = ["2", "4", "6"]
+    intens = StringVar()
+    intens.set(options[0]) # default value
+    intens.trace("w", updateIntensity)
 
     menu_intensity = OptionMenu(
-        root,
-        intensity, 
-        *Options
+        frame,
+        intens, 
+        *(options),
     )
-    menu_intensity.pack()
+    menu_intensity.grid(row = 2, column= 6)
 
-    button_int = Button(
-        master = frame,
-        text="change intenstiy to k", 
-        command=intensity
-    )
-    button_int.grid(row = 2, column = 5)
-    button_int.bind('<ButtonRelease-1>',change_intensity)
+   
 
     # Bind all the required keys to functions
     root.bind('<n>', next_img)
     root.bind("<p>", prev_img)
     root.bind("<q>", quit_img)
+    root.bind("<s>", write_img)
+    root.bind("<L>", enlarge_linear)
+    root.bind("<l>", shrink_linear)
+    root.bind("<e>", shrink_NN)
+    root.bind("<E>", nearest_neighbor)
+    root.bind("<b>", shrink_bilinear)
+    root.bind("<B>", bilinear)
+    root.bind("<c>", shrink_bicubic)
+    root.bind("<C>", bicubic)
+       
 
     root.mainloop() # Start the GUI
 
