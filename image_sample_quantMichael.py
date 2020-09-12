@@ -251,7 +251,7 @@ def shrink_linear(event):
 def change_intensity(event):
     global current_disp
     img = opencv_img(count)
-    k = 10
+    k = 4
     target_level = 2**k
     target_compr_factor = 256/target_level
     
@@ -314,9 +314,9 @@ def change_intensity(event):
     
     for i in range(0, img.shape[0]):
         for j in range(0, img.shape[1]):
-            changed_img[i, j,0] =  np.uint8(min(255,math.floor(np.double(normalized_img[i,j,0]*target_level))))
-            changed_img[i, j,1] =  np.uint8(min(255,math.floor(np.double(normalized_img[i,j,1]*target_level))))
-            changed_img[i, j,2] =  np.uint8(min(255,math.floor(np.double(normalized_img[i,j,2]*target_level))))
+            changed_img[i, j,0] =  np.uint8(min(255,math.floor(np.double(normalized_img[i,j,0]*target_level)) * 0.999 * (2**(8-k))))
+            changed_img[i, j,1] =  np.uint8(min(255,math.floor(np.double(normalized_img[i,j,1]*target_level)) * 0.999 * (2**(8-k))))
+            changed_img[i, j,2] =  np.uint8(min(255,math.floor(np.double(normalized_img[i,j,2]*target_level)) * 0.999 * (2**(8-k))))
     
     max_changed_red = np.amax(changed_img[:,:,0])
     max_changed_green = np.amax(changed_img[:,:,1])
