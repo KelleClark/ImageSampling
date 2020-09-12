@@ -89,6 +89,7 @@ def convert_img(image):
 
 # Wrapper to load the image for display
 def load_img(count):
+    global current_disp
     current_disp = convert_img(opencv_img(count))
     return current_disp
 
@@ -177,6 +178,7 @@ def bilinear(factor=0.5):
 
 # Enlarge image by factor of 2 using linear interpolation
 def enlarge_linear(event):
+    global count
     global current_disp
     image = opencv_img(count)
 
@@ -214,12 +216,13 @@ def enlarge_linear(event):
 
     enlarged_img = enlarged_img[0:int(enlarged_img.shape[0]*2), 0:int(enlarged_img.shape[1]*2)]
     current_disp = enlarged_img
-    imgtk = convert_img(enlarged_img)
+    imgtk = convert_img(current_disp)
     tex = extract_meta()
     update_window(imgtk, tex)
 
 # Shrink image by factor of 2 (or nearly 2 if odd dimension) using linear interpolation
 def shrink_linear(event):
+    global count
     global current_disp
     image = opencv_img(count)
 
@@ -243,20 +246,27 @@ def shrink_linear(event):
 
     shrunken_img = shrunken_img[0:int(shrunken_img.shape[0]*2), 0:int(shrunken_img.shape[1]*2)]
     current_disp = shrunken_img
-    imgtk = convert_img(shrunken_img)
+    imgtk = convert_img(current_disp)
     tex = extract_meta()
     update_window(imgtk, tex)
 
+
+def updateIntensity(*args):
+    global intens
+    print("intensity at k = "+ intens.get())
+    
 # Change the intensity k
 def change_intensity(event):
+    global count
     global current_disp
+    global intens
     img = opencv_img(count)
-    k = 7
-    target_level = 2**k
+    k = int(intens.get())
+    target_level = 2**int(intens.get())
     target_compr_factor = 256/target_level
     
     # a new matrix (multi-dim array) of all ones with the same width and height that holds RGB to be normalized
-    normalized_img = np.ones((img.shape[0], img.shape[1], 3), dtype=np.uint8)
+    normalized_img = np.ones((img.shape[0], img.shape[1], 3))
     
     # a new matrix (multi-dim array) of all ones with the same width and height that holds RGB for intensity change
     changed_img = np.ones((img.shape[0], img.shape[1], 3), dtype=np.uint8)
@@ -311,12 +321,14 @@ def change_intensity(event):
     print("the normalized_max green is " + str(max_normalized_green)+" and the normalized_min green is "+ str(min_normalized_green))
     print("the normalized_mmx blue is " + str(max_normalized_blue)+" and the normalized_min blue is "+ str(min_normalized_blue))
     
-    
+    # the normalized image is creating values between 0 and 1, transform to [0, 2^k -1] and taking the floor creates
+    # classes of pixels that will are now represented as a single transformed pixel value (equivalence classes) using floor
+    # the final transformation takes these values to the new pixel in the rangeg of [0, 255] before rendering the changed_img.
     for i in range(0, img.shape[0]):
         for j in range(0, img.shape[1]):
-            changed_img[i, j,0] =  np.uint8(math.floor(np.double(normalized_img[i,j,0]*target_level)))
-            changed_img[i, j,1] =  np.uint8(math.floor(np.double(normalized_img[i,j,1]*target_level)))
-            changed_img[i, j,2] =  np.uint8(math.floor(np.double(normalized_img[i,j,2]*target_level)))   
+            changed_img[i, j,0] =  np.uint8(min(255, ((math.floor(np.double(normalized_img[i,j,0]*target_level))/target_level))*255))
+            changed_img[i, j,1] =  np.uint8(min(255, ((math.floor(np.double(normalized_img[i,j,1]*target_level))/target_level))*255))
+            changed_img[i, j,2] =  np.uint8(min(255, ((math.floor(np.double(normalized_img[i,j,2]*target_level))/target_level))*255))
     
     max_changed_red = np.amax(changed_img[:,:,0])
     max_changed_green = np.amax(changed_img[:,:,1])
@@ -368,12 +380,22 @@ def extract_meta():
 def write_img(event):
     global count
     global current_disp
+    
+    # get name of current image and add 'new" and index to name
     currpath = extract_meta()
-    newname = currpath[1]+"new"+str(count)
-    status = cv2.imwrite(currpath[0]+"/"+ newname+".png", current_disp)
+    name = currpath[1]
+    print(name)
+    ind = name.rindex(".")
+    if ind != -1:
+        newname = name[0:ind]+"New"+str(count)+name[ind:]
+    else:
+        newname = name+"New"+str(count)+".png"
+    status = cv2.imwrite(currpath[0]+"/"+ newname, current_disp)
+    
+    # if able to write to file, display  message otherwise display error message 
     if status != False:
-        print("A new image has been added at "+currpath[0]+newname)
-        showinfo("Image saved at "+currpath[0]+newname)
+        print("A new image has been added at "+currpath[0]+"/"+newname)
+        showinfo("Image saved at "+currpath[0]+"/"+newname)
         load_path(args.path)
     else:
        print("The image was not saved")
@@ -395,6 +417,7 @@ def main():
 
     # keep track of the image currently in window
     global current_disp
+    global intens
     current_disp = imgtk
 
     # Put everything in the display window
@@ -514,10 +537,34 @@ def main():
     btn_intensity.grid(row = 2, column = 4)
     btn_intensity.bind('<ButtonRelease-1>', change_intensity)
 
+    options = ["2", "4", "6"]
+    intens = StringVar()
+    intens.set(options[0]) # default value
+    intens.trace("w", updateIntensity)
+
+    menu_intensity = OptionMenu(
+        frame,
+        intens, 
+        *(options),
+    )
+    menu_intensity.grid(row = 2, column= 6)
+
+   
+
     # Bind all the required keys to functions
     root.bind('<n>', next_img)
     root.bind("<p>", prev_img)
     root.bind("<q>", quit_img)
+    root.bind("<s>", write_img)
+    root.bind("<L>", enlarge_linear)
+    root.bind("<l>", shrink_linear)
+    root.bind("<e>", shrink_NN)
+    root.bind("<E>", nearest_neighbor)
+    root.bind("<b>", shrink_bilinear)
+    root.bind("<B>", bilinear)
+    root.bind("<c>", shrink_bicubic)
+    root.bind("<C>", bicubic)
+       
 
     root.mainloop() # Start the GUI
 
