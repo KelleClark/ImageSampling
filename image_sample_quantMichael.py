@@ -200,20 +200,18 @@ def enlarge_linear(event):
     # For each column, go to each row position and if the row is divisible by 2, copy old img values
     # otherwise use linear interpolation with above and below spatial coordiante RGB values
     # for j in range(current_disp.shape[1] * 2):
-    for j in range(enlarged_img.shape[1]):
-        for i in range(1, enlarged_img.shape[0] - 2, 2):
+    for j in range(0, enlarged_img.shape[1] - 2, 2):
+        for i in range(1, enlarged_img.shape[0] - 1, 2):
             enlarged_img[i, j] = (1/2)*enlarged_img[i-1, j] + (1/2)*enlarged_img[i+1, j]
+            enlarged_img[i, j+1] = (1/2)*enlarged_img[i+1, j] + (1/2) * enlarged_img[i-1, j+2]
         enlarged_img[enlarged_img.shape[0] - 1, j] = enlarged_img[enlarged_img.shape[0] - 2, j]
-        
-    # For each new pixel in the "center" of a square created by four projected pixels from the original
-    # image, we use linear interpolation with the average of the upper right (original pixel) and lower
-    # left of the original pixel.
-    for i in range(1, enlarged_img.shape[0]-1, 2):
-        for j in range(1, enlarged_img.shape[1]-1, 2):
-            enlarged_img[i,j+1] = (1/2)*enlarged_img[i+1,j-1] + (1/2)*enlarged_img[i+1, j+1]
+        enlarged_img[enlarged_img.shape[0] - 1, j+1] = enlarged_img[enlarged_img.shape[0] - 1, j]
+
+    for i in range(1, enlarged_img.shape[0] - 1, 2):
+        enlarged_img[i, enlarged_img.shape[1] - 2] = (1/2)*enlarged_img[i-1, enlarged_img.shape[1] - 2] + (1/2)*enlarged_img[i+1, enlarged_img.shape[1] - 2]
+        enlarged_img[i, enlarged_img.shape[1] - 1] = (1/2)*enlarged_img[i-1, enlarged_img.shape[1] - 1] + (1/2)*enlarged_img[i+1, enlarged_img.shape[1] - 1]
 
     enlarged_img = enlarged_img[0:int(enlarged_img.shape[0]*2), 0:int(enlarged_img.shape[1]*2)]
-    current_disp = enlarged_img
     imgtk = convert_img(enlarged_img)
     tex = extract_meta()
     update_window(imgtk, tex)
