@@ -225,6 +225,8 @@ def bilinear(image, factor=0.5):
 
 # Enlarge image by factor of 2 using linear interpolation
 def enlarge_linear(image):
+    global manipul
+    manipul = "linear_increase"
     start = time()
     # We make a new matrix (multi-dim array) of all zeros twice the width and height that holds RGB
     # enlarged_img = np.zeros((2 * current_disp.shape[0], 2 * current_disp.shape[1], 3), dtype=np.uint8)
@@ -263,6 +265,8 @@ def enlarge_linear(image):
 
 # Shrink image by factor of 2 (or nearly 2 if odd dimension) using linear interpolation
 def shrink_linear(image):
+    global manipul
+    manipul = "linear_shrink"
     start = time()
     # We make a new matrix (multi-dim array) of all zeros twice the width and height that holds RGB
     # enlarged_img = np.zeros((2 * current_disp.shape[0], 2 * current_disp.shape[1], 3), dtype=np.uint8)
