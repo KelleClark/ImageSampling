@@ -5,6 +5,7 @@ import os
 import sys
 import math
 from time import time
+import matplotlib.pyplot as plt
 
 
 # set up an a list for files
