@@ -143,7 +143,7 @@ def change_intensity(img, k):
     return(changed_img)
 
 
-# Shrink using nearest neighbor with a factor or 0.5
+# Shrink using nearest neighbor with a factor of 0.5
 def shrink_NN(img):
     global manipul
     manipul = "nn_shrink"
@@ -152,35 +152,35 @@ def shrink_NN(img):
     end = time()
     print("Shrinking using Nearest Neighbor took: ", str((end-start)/60), " seconds")
 
-# Shirnk using bicubic with a factor or 0.5
+# Shrink using bicubic with a factor of 0.5
 def shrink_bicubic(img):
     global manipul
     manipul = "bilin_shrink"
     start = time()
     bicubic(img, 0.5)
     end = time()
-    print("Shrinking using bicubic took: ", str((end-start)/60), " seconds")
+    print("Shrinking using Bicubic took: ", str((end-start)/60), " seconds")
 
-# Shirnk using bilinear with a factor or 0.5
+# Shrink using bilinear with a factor of 0.5
 def shrink_bilinear(img):
     global manipul
     manipul = "bicube_shrink"
     start = time()
     bilinear(img, 0.5)
     end = time()
-    print("Shrinking using bilinear took: ", str((end-start)/60), " seconds")
+    print("Shrinking using Bilinear took: ", str((end-start)/60), " seconds")
 
-# Increase using nearest neighbor with a factor or 2
+# Increase using nearest neighbor with a factor of 2
 def increase_NN(img):
     global manipul
     manipul = "nn_increase"
     start = time()
     nearest_neighbor(img,2)
     end = time()
-    print("Enlarging using Nearest Neighbors took: ", str((end-start)/60),  " seconds")
+    print("Enlarging using Nearest Neighbor took: ", str((end-start)/60),  " seconds")
 
 
-# Increase using bicubic with a factor or 2
+# Increase using bicubic with a factor of 2
 def increase_bicubic(img):
     global manipul
     manipul = "bilin_increase"
@@ -190,7 +190,7 @@ def increase_bicubic(img):
     print("Enlarging using Bicubic took: ", str((end-start)/60), " seconds")
 
 
-# Increase using bilinear with a factor or 2
+# Increase using bilinear with a factor of 2
 def increase_bilinear(img):
     global manipul
     manipul = "bicube_increase"
@@ -229,13 +229,12 @@ def enlarge_linear(image):
     manipul = "linear_increase"
     start = time()
     # We make a new matrix (multi-dim array) of all zeros twice the width and height that holds RGB
-    # enlarged_img = np.zeros((2 * current_disp.shape[0], 2 * current_disp.shape[1], 3), dtype=np.uint8)
     enlarged_img = np.zeros((2 * image.shape[0], 2 * image.shape[1], 3), dtype=np.uint8)
 
 
 
     # For each row, go to each column position and if the col is divisible by 2, copy old img values
-    # otherwise use linear interpolation with left and right spatial coordiante RGB values
+    # otherwise use linear interpolation with left and right spatial coordinate RGB values
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
             enlarged_img[i*2, j*2] = image[i, j]
@@ -245,8 +244,7 @@ def enlarge_linear(image):
                 enlarged_img[i*2, j*2 + 1] = image[i, j]
 
     # For each column, go to each row position and if the row is divisible by 2, copy old img values
-    # otherwise use linear interpolation with above and below spatial coordiante RGB values
-    # for j in range(current_disp.shape[1] * 2):
+    # otherwise use linear interpolation with above and below spatial coordinate RGB values
     for j in range(0, enlarged_img.shape[1] - 2, 2):
         for i in range(1, enlarged_img.shape[0] - 1, 2):
             enlarged_img[i, j] = (1/2)*enlarged_img[i-1, j] + (1/2)*enlarged_img[i+1, j]
@@ -260,7 +258,7 @@ def enlarge_linear(image):
 
     enlarged_img = enlarged_img[0:int(enlarged_img.shape[0]*2), 0:int(enlarged_img.shape[1]*2)]
     end = time()
-    print("Shrinking using linear took: ", str((end-start)/60),  " seconds")
+    print("Enlarging using linear took: ", str((end-start)/60),  " seconds")
     show_wait_save(enlarged_img)
 
 # Shrink image by factor of 2 (or nearly 2 if odd dimension) using linear interpolation
@@ -269,14 +267,13 @@ def shrink_linear(image):
     manipul = "linear_shrink"
     start = time()
     # We make a new matrix (multi-dim array) of all zeros twice the width and height that holds RGB
-    # enlarged_img = np.zeros((2 * current_disp.shape[0], 2 * current_disp.shape[1], 3), dtype=np.uint8)
     shrunken_img = np.ones((image.shape[0]//2, image.shape[1]//2, 3), dtype=np.uint8)
 
     # The new image will have only a new pixel in the center of each rectangle of old pixel positions
-    # were two adjacent rows and two adjacent columns create a square.  Taking these squares to be
+    # where two adjacent rows and two adjacent columns create a square.  Taking these squares to be
     # non-overlapping approximates the half size for the original image.
     # Value of RGB function at the new point is created by using linear interpolation between
-    # bottom left and top right oringal pixel values of the square.
+    # bottom left and top right original pixel values of the square.
 
     for i in range(1,shrunken_img.shape[0]):
         for j in range(shrunken_img.shape[1]-1):
@@ -314,7 +311,7 @@ def main():
     while count < len(images):
         img = opencv_img(count)
         cv2.imshow("result", img)
-        print("INITAL IMAGE:", images[count])
+        print("INITIAL IMAGE:", images[count])
         cv2.waitKey(0)
         print("k=4")
         intensity_4(img)
@@ -322,18 +319,18 @@ def main():
         intensity_6(img)
         count = count + 1
 
-    print("Next, edit spacial resolution")
+    print("Next, edit spatial resolution")
     # Reset the counter and reload the images to include the new images
     count = 0
     images = []
     load_path(args.path)
 
     # Save each interpolation on every image in the given path -- including
-    #   the intensity changed images. The inetpolations are:
-    # Nearest Neighbor, Bicubic, Bilinear
+    #   the intensity changed images. The interpolations are:
+    # Linear, Nearest Neighbor, Bicubic, Bilinear
     while count < len(images):  # for each image
         img = opencv_img(count)
-        print("INITAL IMAGE:", images[count])
+        print("INITIAL IMAGE:", images[count])
         cv2.waitKey(0)
         cv2.imshow("result", img)
         print("Linear shrink")
