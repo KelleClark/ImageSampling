@@ -78,9 +78,9 @@ def opencv_img(count):
     rows[count] = str(image.shape[0]) # add row count to list
     pixels[count] = str(image.shape[1] * image.shape[0]) # add pixel count to list
     print(str(bitsize[count])+" "+str(image.shape[0])+" "+str(image.shape[1]))
-    print(int(bitsize[count])/(3*int(image.shape[0])*int(image.shape[1])))
-    intensity[count] = math.floor(math.log2(int(bitsize[count])/(3*int(image.shape[0])*int(image.shape[1]))))
-    print(int(intensity[count]))
+    print("pixels" + str(int(bitsize[count])/(int(image.shape[0])*int(image.shape[1]))))
+    intensity[count] = math.ceil(math.log2(int(bitsize[count])/(int(image.shape[0])*int(image.shape[1]))))
+    print(str(intensity[count]))
     return(image)
 
 # Convert it to ImageTK
@@ -269,26 +269,25 @@ def change_intensity(event):
     img = opencv_img(count)
     k = 6
     target_level = 2**k
-    target_compr_factor = 256/target_level
    
     
     # The new image will have the a new intensity value
     # so we know how many bits are being used by looking at intensity[count] in the current image
-    # normalizing the color using a linear transformation from the range of RGB values in the original
+    # normalizing the color using a linear transformation from the range of BGR values in the original
     # image to a smaller range from 0 - (2^k -1) for each k
     
-    max_red = np.amax(img[:,:,0])
+    max_red = np.amax(img[:,:,2])
     max_green = np.amax(img[:,:,1])
-    max_blue = np.amax(img[:,:,2])
-    min_red = np.amin(img[:,:,0])
+    max_blue = np.amax(img[:,:,0])
+    min_red = np.amin(img[:,:,2])
     min_green = np.amin(img[:,:,1])
-    min_blue = np.amin(img[:,:,2])
+    min_blue = np.amin(img[:,:,0])
     print("the original max red is " + str(max_red)+" and the original min red is "+ str(min_red))
     print("the original max green is " + str(max_green)+" and the original min green is "+ str(min_green))
     print("the original max blue is " + str(max_blue)+" and the original min blue is "+ str(min_blue))
    
     # tuple to select colors of each channel line
-    colors = ("r", "g", "b")
+    colors = ("b", "g", "r")
     channel_ids = (0, 1, 2)
 
     # create the histogram plot, with three lines, one for
@@ -306,7 +305,7 @@ def change_intensity(event):
     plt.show()
     
      
-    # a new matrix (multi-dim array) of all ones with the same width and height that holds RGB to be normalized
+    # a new matrix (multi-dim array) of all ones with the same width and height that holds BGR to be normalized
     # if there is a difference in the max and min of R, G  or B is 0...then take the normalized value to be the percentage of the 
     # pixel channel value of overall max of any R, G, B channel to avoid division by 0.
     
@@ -321,12 +320,12 @@ def change_intensity(event):
                 normalized_img[i, j, 1] = img[i, j, 1]/255
                 normalized_img[i, j, 2] = img[i,j,2]/255
    
-    max_normalized_red = np.amax(normalized_img[:,:,0])
+    max_normalized_red = np.amax(normalized_img[:,:,2])
     max_normalized_green = np.amax(normalized_img[:,:,1])
-    max_normalized_blue = np.amax(normalized_img[:,:,2])
-    min_normalized_red = np.amin(normalized_img[:,:,0])
+    max_normalized_blue = np.amax(normalized_img[:,:,0])
+    min_normalized_red = np.amin(normalized_img[:,:,2])
     min_normalized_green = np.amin(normalized_img[:,:,1])
-    min_normalized_blue = np.amin(normalized_img[:,:,2])
+    min_normalized_blue = np.amin(normalized_img[:,:,0])
     print("the normalized_max red is " + str(max_normalized_red)+" and the normalized_min red is "+ str(min_normalized_red))
     print("the normalized_max green is " + str(max_normalized_green)+" and the normalized_min green is "+ str(min_normalized_green))
     print("the normalized_mmx blue is " + str(max_normalized_blue)+" and the normalized_min blue is "+ str(min_normalized_blue))
@@ -355,35 +354,16 @@ def change_intensity(event):
         maxcolor = max(max_normalized_red, max_normalized_green, max_normalized_blue)
         for i in range(0, img.shape[0]):
             for j in range(0, img.shape[1]):
-                if int(max_normalized_red - min_normalized_red) == 0:
-                    changed_img[i,j,0] = np.uint8(math.floor(normalized_img[i,j,0]*float(target_level)))
-                else:
-                    print("target_level = "+str(target_level))
-                    print(str(normalized_img[i,j,0]*target_level))
-                    changed_img[i, j,0] = np.uint8(math.floor(normalized_img[i,j,0]*float(target_level)))
-                if int(max_normalized_green - min_normalized_green) == 0:
-                    changed_img[i,j,1] = np.uint8(math.floor((np.double(normalized_img[i,j,1]/maxcolor)*target_level)))
-                else:
-                    changed_img[i, j,1] = np.uint8(math.floor(np.double((normalized_img[i,j,1] - min_normalized_green)/(max_normalized_green - min_normalized_green))*target_level))
-                if int(max_normalized_blue - min_normalized_blue) == 0:
-                    changed_img[i,j,0] = np.uint8(math.floor((np.double(normalized_img[i,j,2]/maxcolor)*target_level)))
-                else:
-                    changed_img[i, j,0] = np.uint8(math.floor(np.double((normalized_img[i,j,2] - min_normalized_blue)/(max_normalized_blue - min_normalized_blue))*target_level))
-  #  for i in range(0, img.shape[0]):
-  #      for j in range(0, img.shape[1]):
-   #         changed_img[i, j,0] =  np.uint8((math.floor(np.double((normalized_img[i,j,0]-
-    #                            min_normalized_red)/(max(0.01,max_normalized_red - min_normalized_red)))*target_level)+0))
-     #       changed_img[i, j,1] =  np.uint8((math.floor(np.double((normalized_img[i,j,1]-
-      #                          min_normalized_green)/(max(0.01,max_normalized_green - min_normalized_green)))*target_level)+0))
-       #     changed_img[i, j,2] =  np.uint8((math.floor(np.double((normalized_img[i,j,2]-
-      #                         min_normalized_blue)/(max(0.01,max_normalized_blue - min_normalized_blue)))*target_level)+0))
-    
-    max_changed_red = np.amax(changed_img[:,:,0])
+                changed_img[i,j,0] = np.uint8(normalized_img[i,j,0]*(target_level-1))
+                changed_img[i,j,1] = np.uint8(normalized_img[i,j,1]*(target_level-1))
+                changed_img[i,j,2] = np.uint8(normalized_img[i,j,2]*(target_level-1))
+  
+    max_changed_red = np.amax(changed_img[:,:,2])
     max_changed_green = np.amax(changed_img[:,:,1])
-    max_changed_blue = np.amax(changed_img[:,:,2])
-    min_changed_red = np.amin(changed_img[:,:,0])
+    max_changed_blue = np.amax(changed_img[:,:,0])
+    min_changed_red = np.amin(changed_img[:,:,2])
     min_changed_green = np.amin(changed_img[:,:,1])
-    min_changed_blue = np.amin(changed_img[:,:,2])
+    min_changed_blue = np.amin(changed_img[:,:,0])
     print("the max changed_red is " + str(max_changed_red)+" and the min changed_red is "+ str(min_changed_red))
     print("the max changed_green is " + str(max_changed_green)+" and the min changed_green is "+ str(min_changed_green))
     print("the max changed_blue is " + str(max_changed_blue)+" and the min changed_blue is "+ str(min_changed_blue))
@@ -410,25 +390,16 @@ def change_intensity(event):
         maxcolor = max(max_changed_red, max_changed_green, max_changed_blue)
         for i in range(0, img.shape[0]):
             for j in range(0, img.shape[1]):
-                if (max_changed_red - min_changed_red) == 0:
-                    clr_corrected_img[i,j,0] = np.uint8(math.floor(np.double(changed_img[i,j,0]/maxcolor)*255))
-                else:
-                    clr_corrected_img[i, j,0] = np.uint8(math.floor(np.double((changed_img[i,j,0] - min_changed_red)/(max_changed_red - min_changed_red))*255))
-                if (max_changed_green - min_changed_green) == 0:
-                    clr_corrected_img[i,j,1] = np.uint8(math.floor(np.double(changed_img[i,j,1]/maxcolor)*255))
-                else:
-                    clr_corrected_img[i, j,1] = np.uint8(math.floor(np.double((changed_img[i,j,1] - min_changed_green)/(max_changed_green - min_changed_green))*255))
-                if (max_changed_blue - min_changed_blue) == 0:
-                    clr_corrected_img[i,j,2] = np.uint8(math.floor(np.double(changed_img[i,j,2]/maxcolor)*255))
-                else:
-                    clr_corrected_img[i, j,2] = np.uint8(math.floor(np.double((changed_img[i,j,2] - min_changed_blue)/(max_changed_blue - min_changed_blue))*255))
-          
-    max_clr_corrected_red = np.amax(clr_corrected_img[:,:,0])
+                clr_corrected_img[i,j,0] = np.uint8((changed_img[i,j,0]/(target_level-1))*255)
+                clr_corrected_img[i,j,1] = np.uint8((changed_img[i,j,1]/(target_level-1))*255)
+                clr_corrected_img[i,j,2] = np.uint8((changed_img[i,j,2]/(target_level-1))*255)
+                          
+    max_clr_corrected_red = np.amax(clr_corrected_img[:,:,2])
     max_clr_corrected_green = np.amax(clr_corrected_img[:,:,1])
-    max_clr_corrected_blue = np.amax(clr_corrected_img[:,:,2])
-    min_clr_corrected_red = np.amin(clr_corrected_img[:,:,0])
+    max_clr_corrected_blue = np.amax(clr_corrected_img[:,:,0])
+    min_clr_corrected_red = np.amin(clr_corrected_img[:,:,2])
     min_clr_corrected_green = np.amin(clr_corrected_img[:,:,1])
-    min_clr_corrected_blue = np.amin(clr_corrected_img[:,:,2])
+    min_clr_corrected_blue = np.amin(clr_corrected_img[:,:,0])
     print("the max clr corrected red is " + str(max_clr_corrected_red)+" and the min clr corrected red is "+ str(min_clr_corrected_red))
     print("the max clr corrected green is " + str(max_clr_corrected_green)+" and the min clr corrected green is "+ str(min_clr_corrected_green))
     print("the max corrected blue is " + str(max_clr_corrected_blue)+" and the min clr corrected blue is "+ str(min_clr_corrected_blue))
