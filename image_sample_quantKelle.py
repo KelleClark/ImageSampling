@@ -62,7 +62,7 @@ def load_path(path):
                 columns.append("")
                 rows.append("")
                 pixels.append("")
-                bitsize.append(os.path.getsize(pos_img)*8) #at first this is the size of the image in bits
+                bitsize.append(int(os.path.getsize(pos_img))*8) #at first this is the size of the image in bits
                 intensity.append(0) #constructed to be 0 until opencv_img finds the intensity
     # If there is a problem with the given path, exit
     if len(images) == 0:
@@ -78,8 +78,8 @@ def opencv_img(count):
     rows[count] = str(image.shape[0]) # add row count to list
     pixels[count] = str(image.shape[1] * image.shape[0]) # add pixel count to list
     print(str(bitsize[count])+" "+str(image.shape[0])+" "+str(image.shape[1]))
-    print("pixels" + str(int(bitsize[count])/(int(image.shape[0])*int(image.shape[1]))))
-    intensity[count] = math.ceil(math.log2(int(bitsize[count])/(int(image.shape[0])*int(image.shape[1]))))
+    print("k" + str(int(bitsize[count])/(int(image.shape[0])*int(image.shape[1]))))
+    intensity[count] = math.ceil(int(bitsize[count])/(3*int(image.shape[0])*int(image.shape[1])))
     print(str(intensity[count]))
     return(image)
 

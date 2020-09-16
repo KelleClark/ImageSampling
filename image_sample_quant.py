@@ -13,17 +13,18 @@ images = []
 
 # index for the list of images in the browser
 count = 0
+
 # Current manipulation
 manipul = ""
 
 # Get and parse the arguments
 def get_args():
-    parser = argparse.ArgumentParser(description='Image Manipulaation v1.0')
+    parser = argparse.ArgumentParser(description='Image Manipulation v1.0')
     parser.add_argument('path', metavar='dir',
                         help='The root directory to view photos in')
 
     parser.add_argument('--faster', metavar='bool',  type=int,
-                        help='The color algorithm speed: "1" uses a faster implementation')
+                        help='The intensity algorithm speed: "1" uses a faster implementation')
 
     args = parser.parse_args()
     return(args)
@@ -78,31 +79,28 @@ def change_intensity(img, k):
     target_level = 2**k
     target_compr_factor = 256/target_level
 
-    # a new matrix (multi-dim array) of all ones with the same width and height that holds RGB to be normalized
+    # a new matrix (multi-dim array) of all ones with the same width and height that holds BGR to be normalized
     normalized_img = np.ones((img.shape[0], img.shape[1], 3))
 
-    # a new matrix (multi-dim array) of all ones with the same width and height that holds RGB for intensity change
+    # a new matrix (multi-dim array) of all ones with the same width and height that holds BGR from [0, 2^k -1]  intensity change 
     changed_img = np.ones((img.shape[0], img.shape[1], 3), dtype=np.uint8)
+    
+    # a final matrix (multi-dim array) of all ones with the same width and height that holds BGR for the final displayed image
+    clr_corrected_img = np.ones((img.shape[0], img.shape[1], 3), dtype=np.uint8)
 
     # The new image will have the a new intensity value
     # so we know how many bits are being used by looking at intensity[count] in the current image
-    # normalizing the color using a linear transformation from the range of RGB values in the original
+    # normalizing the color using a sequence of 3 linear transformation from the range of RGB values in the original
     # image to a smaller range from 0 - (2^k -1) for each k
 
-    max_red = np.amax(img[:,:,0])
-    max_green = np.amax(img[:,:,1])
-    max_blue = np.amax(img[:,:,2])
-    min_red = np.amin(img[:,:,0])
-    min_green = np.amin(img[:,:,1])
-    min_blue = np.amin(img[:,:,2])
-
+    
     # tuple to select colors of each channel line
-    colors = ("r", "g", "b")
+    colors = ("b", "g", "r")
     channel_ids = (0, 1, 2)
 
     # create the histogram plot, with three lines, one for
     # each color
-    plt.xlim([0, 256])
+    plt.xlim([0, 255])
     for channel_id, c in zip(channel_ids, colors):
         histogram, bin_edges = np.histogram(
             img[:, :, channel_id], bins=256, range=(0, 256)
@@ -114,20 +112,40 @@ def change_intensity(img, k):
 
     plt.show()
 
+    # first transformation to standardized the values in each BGR channel to [0,1]
     for i in range(0, img.shape[0]):
         for j in range(0, img.shape[1]):
-            normalized_img[i, j,0] = (img[i,j,0] - min_red)/(max_red - min_red)
-            normalized_img[i, j,1] = (img[i,j,1] - min_green)/(max_green - min_green)
-            normalized_img[i, j,2] = (img[i,j,2] - min_blue)/(max_blue - min_blue)
+            normalized_img[i, j, 0] = img[i,j,0]/255
+            normalized_img[i, j, 1] = img[i, j, 1]/255
+            normalized_img[i, j, 2] = img[i,j,2]/255
+    
+    # necessary formating of image to render correctly
+    normalized_img = normalized_img[0:int(normalized_img.shape[0]*2), 0:int(normalized_img.shape[1]*2)]
+   
+    # create the histogram plot, with three lines, one for each color
+    plt.xlim([0, 1])
+    for channel_id, c in zip(channel_ids, colors):
+        histogram, bin_edges = np.histogram(
+            normalized_img[:, :, channel_id], bins=256, range=(0, 1)
+        )
+        plt.plot(bin_edges[0:-1], histogram, color=c)
 
+    plt.xlabel("Color value")
+    plt.ylabel("Pixels")
+
+    plt.show()
+    
+    # second transformation so that there are now only 2^k - 1  BGR values
     for i in range(0, img.shape[0]):
         for j in range(0, img.shape[1]):
-            changed_img[i, j,0] =  np.uint8(min(255,math.floor(np.double(normalized_img[i,j,0]*target_level)) * 0.999 * (2**(8-k))))
-            changed_img[i, j,1] =  np.uint8(min(255,math.floor(np.double(normalized_img[i,j,1]*target_level)) * 0.999 * (2**(8-k))))
-            changed_img[i, j,2] =  np.uint8(min(255,math.floor(np.double(normalized_img[i,j,2]*target_level)) * 0.999 * (2**(8-k))))
-
+            changed_img[i,j,0] = np.uint8(min(255, normalized_img[i,j,0]*(target_level-1)))
+            changed_img[i,j,1] = np.uint8(min(255, normalized_img[i,j,1]*(target_level-1)))
+            changed_img[i,j,2] = np.uint8(min(255, normalized_img[i,j,2]*(target_level-1)))
+  
+    # necessary formating of image to render correctly        
     changed_img = changed_img[0:int(changed_img.shape[0]), 0:int(changed_img.shape[1])]
 
+    # create the histogram plot, with three lines, one for each color
     plt.xlim([0, 256])
     for channel_id, c in zip(channel_ids, colors):
         histogram, bin_edges = np.histogram(
@@ -139,8 +157,31 @@ def change_intensity(img, k):
     plt.ylabel("Pixels")
 
     plt.show()
+         
+    # the final transformation takes the 2^k - 1 values in the range of [0, 255] before rendering the image.
+    for i in range(0, img.shape[0]):
+        for j in range(0, img.shape[1]):
+            clr_corrected_img[i,j,0] = np.uint8((changed_img[i,j,0]/(target_level-1))*(2^8 - 1))
+            clr_corrected_img[i,j,1] = np.uint8((changed_img[i,j,1]/(target_level-1))*(2^8 - 1))
+            clr_corrected_img[i,j,2] = np.uint8((changed_img[i,j,2]/(target_level-1))*(2^8 - 1))
+           
+    # necessary formating of image to render correctly 
+    clr_corrected_img = clr_corrected_img[0:int(clr_corrected_img.shape[0]*2), 0:int(clr_corrected_img.shape[1]*2)]
+    
+    # create the histogram plot, with three lines, one for each color
+    plt.xlim([0, 256])
+    for channel_id, c in zip(channel_ids, colors):
+        histogram, bin_edges = np.histogram(
+            clr_corrected_img[:, :, channel_id], bins=256, range=(0, 256)
+        )
+        plt.plot(bin_edges[0:-1], histogram, color=c)
 
-    return(changed_img)
+    plt.xlabel("Color value")
+    plt.ylabel("Pixels")
+
+    plt.show()
+    
+    return(clr_corrected_img)
 
 
 # Shrink using nearest neighbor with a factor of 0.5
