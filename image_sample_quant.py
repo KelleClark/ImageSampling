@@ -161,9 +161,9 @@ def change_intensity(img, k):
     # the final transformation takes the 2^k - 1 values in the range of [0, 255] before rendering the image.
     for i in range(0, img.shape[0]):
         for j in range(0, img.shape[1]):
-            clr_corrected_img[i,j,0] = np.uint8((changed_img[i,j,0]/(target_level-1))*(2^8 - 1))
-            clr_corrected_img[i,j,1] = np.uint8((changed_img[i,j,1]/(target_level-1))*(2^8 - 1))
-            clr_corrected_img[i,j,2] = np.uint8((changed_img[i,j,2]/(target_level-1))*(2^8 - 1))
+            clr_corrected_img[i,j,0] = np.uint8((changed_img[i,j,0]/(target_level-1))*(2**8 - 1))
+            clr_corrected_img[i,j,1] = np.uint8((changed_img[i,j,1]/(target_level-1))*(2**8 - 1))
+            clr_corrected_img[i,j,2] = np.uint8((changed_img[i,j,2]/(target_level-1))*(2**8 - 1))
            
     # necessary formating of image to render correctly 
     clr_corrected_img = clr_corrected_img[0:int(clr_corrected_img.shape[0]*2), 0:int(clr_corrected_img.shape[1]*2)]
@@ -316,9 +316,12 @@ def shrink_linear(image):
     # Value of RGB function at the new point is created by using linear interpolation between
     # bottom left and top right original pixel values of the square.
 
-    for i in range(1,shrunken_img.shape[0]):
-        for j in range(shrunken_img.shape[1]-1):
-            shrunken_img[i, j] = (1/2)*image[2*i,2*j]+(1/2)*image[2*i-1,2*j]
+    for i in range(0,shrunken_img.shape[0]):
+        for j in range(shrunken_img.shape[1]):
+            if i == shrunken_img.shape[0] - 1:
+                shrunken_img[i,j] = image[2*i,2*j]
+            else:
+                shrunken_img[i, j] = (1/2)*image[2*i,2*j]+(1/2)*image[2*i+1,2*j]
 
     shrunken_img = shrunken_img[0:int(shrunken_img.shape[0]*2), 0:int(shrunken_img.shape[1]*2)]
     end = time()
