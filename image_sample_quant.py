@@ -8,7 +8,7 @@ from time import time
 import matplotlib.pyplot as plt
 
 
-# set up an a list for files
+# set up a list for files
 images = []
 
 # index for the list of images in the browser
@@ -88,7 +88,7 @@ def change_intensity(img, k):
     # a final matrix (multi-dim array) of all ones with the same width and height that holds BGR for the final displayed image
     clr_corrected_img = np.ones((img.shape[0], img.shape[1], 3), dtype=np.uint8)
 
-    # The new image will have the a new intensity value
+    # The new image will have the new intensity value
     # so we know how many bits are being used by looking at intensity[count] in the current image
     # normalizing the color using a sequence of 3 linear transformation from the range of RGB values in the original
     # image to a smaller range from 0 - (2^k -1) for each k
@@ -119,7 +119,7 @@ def change_intensity(img, k):
             normalized_img[i, j, 1] = img[i, j, 1]/255
             normalized_img[i, j, 2] = img[i,j,2]/255
     
-    # necessary formating of image to render correctly
+    # necessary formatting of image to render correctly
     normalized_img = normalized_img[0:int(normalized_img.shape[0]*2), 0:int(normalized_img.shape[1]*2)]
    
     # create the histogram plot, with three lines, one for each color
@@ -142,7 +142,7 @@ def change_intensity(img, k):
             changed_img[i,j,1] = np.uint8(min(255, normalized_img[i,j,1]*(target_level-1)))
             changed_img[i,j,2] = np.uint8(min(255, normalized_img[i,j,2]*(target_level-1)))
   
-    # necessary formating of image to render correctly        
+    # necessary formatting of image to render correctly        
     changed_img = changed_img[0:int(changed_img.shape[0]), 0:int(changed_img.shape[1])]
 
     # create the histogram plot, with three lines, one for each color
@@ -165,7 +165,7 @@ def change_intensity(img, k):
             clr_corrected_img[i,j,1] = np.uint8((changed_img[i,j,1]/(target_level-1))*(2**8 - 1))
             clr_corrected_img[i,j,2] = np.uint8((changed_img[i,j,2]/(target_level-1))*(2**8 - 1))
            
-    # necessary formating of image to render correctly 
+    # necessary formatting of image to render correctly 
     clr_corrected_img = clr_corrected_img[0:int(clr_corrected_img.shape[0]*2), 0:int(clr_corrected_img.shape[1]*2)]
     
     # create the histogram plot, with three lines, one for each color
@@ -293,10 +293,12 @@ def enlarge_linear(image):
         enlarged_img[enlarged_img.shape[0] - 1, j] = enlarged_img[enlarged_img.shape[0] - 2, j]
         enlarged_img[enlarged_img.shape[0] - 1, j+1] = enlarged_img[enlarged_img.shape[0] - 1, j]
 
+    # In the last 2 columns, for every second row, use linear interpolation with above and below spatial coordinate RGB values
     for i in range(1, enlarged_img.shape[0] - 1, 2):
         enlarged_img[i, enlarged_img.shape[1] - 2] = (1/2)*enlarged_img[i-1, enlarged_img.shape[1] - 2] + (1/2)*enlarged_img[i+1, enlarged_img.shape[1] - 2]
         enlarged_img[i, enlarged_img.shape[1] - 1] = (1/2)*enlarged_img[i-1, enlarged_img.shape[1] - 1] + (1/2)*enlarged_img[i+1, enlarged_img.shape[1] - 1]
-
+        
+    # necessary formatting of image to render correctly
     enlarged_img = enlarged_img[0:int(enlarged_img.shape[0]*2), 0:int(enlarged_img.shape[1]*2)]
     end = time()
     print("Enlarging using linear took: ", str((end-start)/60),  " seconds")
@@ -314,7 +316,7 @@ def shrink_linear(image):
     # where two adjacent rows and two adjacent columns create a square.  Taking these squares to be
     # non-overlapping approximates the half size for the original image.
     # Value of RGB function at the new point is created by using linear interpolation between
-    # bottom left and top right original pixel values of the square.
+    # top left and top right original pixel values of the square.
 
     for i in range(0,shrunken_img.shape[0]):
         for j in range(shrunken_img.shape[1]):
